@@ -9,15 +9,22 @@ typedef struct PersonInfo {
 }PersonInfo;
 #define MAX_PERSON_INFO_SIZE 1000
 typedef struct AddressBook {
-	PersonInfo persons[MAX_PERSON_INFO_SIZE];
+	//PersonInfo persons[MAX_PERSON_INFO_SIZE];
+	PersonInfo* persons;//改成指针的形式,通过动态内存管理来实现
 	//通过size表示persons数组中实际有效的元素
 	//[0,size)范围的元素是有效元素
 	int size;
+	int capacity;
+	//capacity表示当前persons对应的空间最大容量
 }AddressBook;
 void init(AddressBook* addressBook) { 
-	memset(addressBook->persons, 0, sizeof(addressBook->persons));
+	//memset(addressBook->persons, 0, sizeof(addressBook->persons));
 
+	//addressBook->size = 0;
+	//显式的申请内存空间
 	addressBook->size = 0;
+	addressBook->capacity = 200;
+	addressBook->persons = (PersonInfo*)malloc(addressBook->capacity * sizeof(PersonInfo));
 }
 int menu(){
 	printf("====================\n");
@@ -47,9 +54,22 @@ void showPersonInfo(AddressBook* addressBook) {
 void addPersonInfo(AddressBook* addressBook) {
 	//把新联系人的信息放在下标为size位置的元素上
 	printf("新增联系人...\n\n");
-	if (addressBook->size >= MAX_PERSON_INFO_SIZE) {
+	if (addressBook->size >= addressBook->capacity) {
 		//联系人已经满了
-		printf("新增失败！联系人已满！\n");
+		//printf("新增失败！联系人已满！\n");
+		//进行动态扩容
+		addressBook->capacity += 100;
+		//重新申请内存空间
+		//addressBook->persons = realloc(addressBook->persons, addressBook->capacity * sizeof(PersonInfo));
+		//直接使用realloc比较简单方便
+		//也可以使用malloc手动实现
+		PersonInfo* old = addressBook->persons;
+		addressBook->persons = (PersonInfo*)malloc(addressBook->capacity * sizeof(PersonInfo));
+		//把旧的数据拷贝到新的内存空间上
+		memcpy(addressBook->persons, old, sizeof(PersonInfo) * addressBook->size);
+		//释放旧空间
+		free(old);
+		//return;
 	}
 	PersonInfo* p = &addressBook->persons[addressBook->size];
 	printf("请输入新联系人的姓名:\n");
